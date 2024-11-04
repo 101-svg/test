@@ -1155,7 +1155,6 @@ function UpdateObjects(self) -- update esp objects for players and npcs
 				local h,l = (tly > try and tly) or try, (tly < try and tly) or try
 				
 				name.Position = Vector2new(tlx + (trx - tlx) / 2, (h + (l - h) / 2) - (Names.Size + 2))
-				data.Position = Vector2new(blx + (brx - blx) / 2, bly + (bry - bly) / 2)
 				if ss.HealthBars.Enabled then
 					data.Position = Vector2new(data.Position.X, data.Position.Y + z)
 				end
