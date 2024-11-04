@@ -37,13 +37,13 @@ if not EspSettings then
 			Transparency = 1,
 			RainbowColor = false,
 			Overrides = {
-				Boxes = true,
-				Tracers = true,
-				Names = true,
-				Skeletons = true,
-				HealthBars = true,
+				Boxes = false,
+				Tracers = false,
+				Names = false,
+				Skeletons = false,
+				HealthBars = false,
 				HeadDots = true,
-				LookTracers = true
+				LookTracers = false
 			}
 		},
 		Boxes = {
@@ -58,7 +58,7 @@ if not EspSettings then
 			Thickness = 1
 		},
 		Tracers = {
-			Enabled = true,
+			Enabled = false,
 			Transparency = 1,
 			Color = Color3.fromRGB(255,255,255),
 			UseTeamColor = true,
