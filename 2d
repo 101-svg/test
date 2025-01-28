@@ -1,0 +1,154 @@
+local Settings = {
+    Box_Color = Color3.fromRGB(255, 255, 255),
+    Tracer_Color = Color3.fromRGB(255, 255, 255),
+    Tracer_Thickness = 1,
+    Box_Thickness = 1,
+    Text_Color = Color3.fromRGB(255, 255, 255),
+    Text_Size = 20,
+    Fancy_Font = true,
+    Tracer_Origin = "Bottom",
+    Tracer_FollowMouse = false,
+    Tracers = true,
+    Health_Bar_Color = Color3.fromRGB(0, 255, 0), -- Green health bar
+    Health_Bar_Background_Color = Color3.fromRGB(255, 0, 0) -- Red background for missing health
+}
+
+local function ToFancyText(text)
+    if Settings.Fancy_Font then
+        local fancy_map = {
+            ["A"] = "ᴀ", ["B"] = "ʙ", ["C"] = "ᴄ", ["D"] = "ᴅ", ["E"] = "ᴇ",
+            ["F"] = "ꜰ", ["G"] = "ɢ", ["H"] = "ʜ", ["I"] = "ɪ", ["J"] = "ᴊ",
+            ["K"] = "ᴋ", ["L"] = "ʟ", ["M"] = "ᴍ", ["N"] = "ɴ", ["O"] = "ᴏ",
+            ["P"] = "ᴘ", ["Q"] = "ǫ", ["R"] = "ʀ", ["S"] = "ꜱ", ["T"] = "ᴛ",
+            ["U"] = "ᴜ", ["V"] = "ᴠ", ["W"] = "ᴡ", ["X"] = "x", ["Y"] = "ʏ",
+            ["Z"] = "ᴢ", ["a"] = "ᴀ", ["b"] = "ʙ", ["c"] = "ᴄ", ["d"] = "ᴅ",
+            ["e"] = "ᴇ", ["f"] = "ꜰ", ["g"] = "ɢ", ["h"] = "ʜ", ["i"] = "ɪ",
+            ["j"] = "ᴊ", ["k"] = "ᴋ", ["l"] = "ʟ", ["m"] = "ᴍ", ["n"] = "ɴ",
+            ["o"] = "ᴏ", ["p"] = "ᴘ", ["q"] = "ǫ", ["r"] = "ʀ", ["s"] = "ꜱ",
+            ["t"] = "ᴛ", ["u"] = "ᴜ", ["v"] = "ᴠ", ["w"] = "ᴡ", ["x"] = "x",
+            ["y"] = "ʏ", ["z"] = "ᴢ", [" "] = " "
+        }
+        local fancy_text = ""
+        for char in text:gmatch(".") do
+            fancy_text = fancy_text .. (fancy_map[char] or char)
+        end
+        return fancy_text
+    end
+    return text
+end
+
+local function ESP(plr)
+    local drawings = {
+        box = Drawing.new("Quad"),
+        healthbar_bg = Drawing.new("Line"), -- Background for health bar
+        healthbar = Drawing.new("Line"), -- Foreground (health)
+        nametag = Drawing.new("Text"),
+        distancetag = Drawing.new("Text")
+    }
+
+    -- Box settings
+    drawings.box.Thickness = Settings.Box_Thickness
+    drawings.box.Color = Settings.Box_Color
+    drawings.box.Transparency = 1
+
+    -- Health bar settings
+    drawings.healthbar_bg.Thickness = 2
+    drawings.healthbar_bg.Color = Settings.Health_Bar_Background_Color
+    drawings.healthbar_bg.Transparency = 1
+
+    drawings.healthbar.Thickness = 2
+    drawings.healthbar.Color = Settings.Health_Bar_Color
+    drawings.healthbar.Transparency = 1
+
+    -- Name tag settings
+    drawings.nametag.Size = Settings.Text_Size
+    drawings.nametag.Color = Settings.Text_Color
+    drawings.nametag.Center = true
+    drawings.nametag.Outline = true
+
+    -- Distance tag settings
+    drawings.distancetag.Size = Settings.Text_Size
+    drawings.distancetag.Color = Settings.Text_Color
+    drawings.distancetag.Center = true
+    drawings.distancetag.Outline = true
+
+    local function Update()
+        local connection
+        connection = game:GetService("RunService").RenderStepped:Connect(function()
+            if plr.Character and plr.Character:FindFirstChild("Humanoid") and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character:FindFirstChild("Head") and plr.Character.Humanoid.Health > 0 then
+                local HumPos, OnScreen = workspace.CurrentCamera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+                if OnScreen then
+                    local headPos = workspace.CurrentCamera:WorldToViewportPoint(plr.Character.Head.Position)
+                    local boxHeight = math.clamp((Vector2.new(headPos.X, headPos.Y) - Vector2.new(HumPos.X, HumPos.Y)).magnitude, 2, math.huge)
+                    local boxWidth = boxHeight / 2
+
+                    -- Set box points
+                    drawings.box.PointA = Vector2.new(HumPos.X - boxWidth, HumPos.Y - boxHeight * 2)
+                    drawings.box.PointB = Vector2.new(HumPos.X + boxWidth, HumPos.Y - boxHeight * 2)
+                    drawings.box.PointC = Vector2.new(HumPos.X + boxWidth, HumPos.Y + boxHeight * 2)
+                    drawings.box.PointD = Vector2.new(HumPos.X - boxWidth, HumPos.Y + boxHeight * 2)
+
+                    -- Set health bar
+                    local health = plr.Character.Humanoid.Health
+                    local maxHealth = plr.Character.Humanoid.MaxHealth
+                    local healthPercent = math.clamp(health / maxHealth, 0, 1)
+
+                    local barHeight = boxHeight * 4 -- Total height of the health bar
+                    local barStart = Vector2.new(HumPos.X + boxWidth + 5, HumPos.Y - boxHeight * 2)
+                    local barEnd = Vector2.new(barStart.X, barStart.Y + barHeight)
+
+                    -- Health bar background
+                    drawings.healthbar_bg.From = barStart
+                    drawings.healthbar_bg.To = barEnd
+
+                    -- Health bar foreground
+                    drawings.healthbar.From = barStart
+                    drawings.healthbar.To = Vector2.new(barStart.X, barStart.Y + barHeight * healthPercent)
+
+                    -- Name tag position and text
+                    drawings.nametag.Position = Vector2.new(HumPos.X, HumPos.Y - boxHeight * 2 - 10)
+                    drawings.nametag.Text = ToFancyText(plr.Name)
+
+                    -- Distance tag position and text
+                    local distance = math.floor((plr.Character.HumanoidRootPart.Position - game.Players.LocalPlayer.Character.HumanoidRootPart.Position).Magnitude)
+                    drawings.distancetag.Position = Vector2.new(HumPos.X, HumPos.Y + boxHeight * 2 + 10)
+                    drawings.distancetag.Text = ToFancyText("[" .. distance .. "m]")
+
+                    -- Make everything visible
+                    drawings.box.Visible = true
+                    drawings.healthbar_bg.Visible = true
+                    drawings.healthbar.Visible = true
+                    drawings.nametag.Visible = true
+                    drawings.distancetag.Visible = true
+                else
+                    -- Hide drawings when the player is offscreen
+                    drawings.box.Visible = false
+                    drawings.healthbar_bg.Visible = false
+                    drawings.healthbar.Visible = false
+                    drawings.nametag.Visible = false
+                    drawings.distancetag.Visible = false
+                end
+            else
+                -- Cleanup when the player leaves or dies
+                for _, drawing in pairs(drawings) do
+                    drawing:Remove()
+                end
+                connection:Disconnect()
+            end
+        end)
+    end
+
+    coroutine.wrap(Update)()
+end
+
+for _, v in pairs(game.Players:GetPlayers()) do
+    if v ~= game.Players.LocalPlayer then
+        ESP(v)
+    end
+end
+
+game.Players.PlayerAdded:Connect(function(newPlayer)
+    if newPlayer ~= game.Players.LocalPlayer then
+        ESP(newPlayer)
+    end
+end)
